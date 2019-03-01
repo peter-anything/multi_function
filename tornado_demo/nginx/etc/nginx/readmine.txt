@@ -1,0 +1,8 @@
+docker run \
+--name my_nginx \
+-p 8000:80 \
+-v /data/www/multi_function/tornado_demo/nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf \
+-v /data/www/multi_function/tornado_demo/nginx/etc/nginx/conf.d:/etc/nginx/conf.d \
+-v /var/log/nginx:/var/log/nginx \
+-v /data/www/multi_function/tornado_demo/media:/data/media/fuwo \
+nginx

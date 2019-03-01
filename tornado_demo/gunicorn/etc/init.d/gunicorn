@@ -1,0 +1,88 @@
+#!/bin/sh
+# config: /etc/gunicorn.conf
+# pidfile: /var/run/gunicorn.pid
+# description: gunicorn
+#
+### BEGIN INIT INFO
+# Provides: gunicorn
+# Required-Start: $local_fs $remote_fs $network
+# Required-Stop: $local_fs $remote_fs $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop gunicorn
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+prog=gunicorn
+gunicorn=/usr/bin/gunicorn
+logdir=/var/log/gunicorn
+conffile=/etc/gunicorn.conf
+lockfile=/var/lock/subsys/gunicorn
+pidfile=/var/run/gunicorn.pid
+application=wsgi:application
+SLEEPMSEC=100000
+RETVAL=0
+
+# exists or create logdir
+if [ ! -d $logdir ];then
+    mkdir -p $logdir
+fi
+
+start() {
+    echo -n $"Starting $prog: "
+
+    daemon --pidfile=${pidfile} ${gunicorn} -c ${conffile} -p ${pidfile} ${application}
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && touch ${lockfile}
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc -p ${pidfile} ${prog} -QUIT
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
+}
+
+reload() {
+    echo -n $"Reloading $prog: "
+    killproc -p ${pidfile} ${prog} -HUP
+    RETVAL=$?
+    echo
+}
+
+rh_status() {
+    status -p ${pidfile} -l ${lockfile} ${gunicorn}
+}
+
+# See how we were called.
+case "$1" in
+    start)
+        rh_status >/dev/null 2>&1 && exit 0
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        rh_status
+        RETVAL=$?
+        ;;
+    restart)
+        stop
+        sleep 2
+        start
+        ;;
+    reload)
+        reload
+        ;;
+    *)
+        echo $"Usage: $prog {start|stop|restart|reload|status|help}"
+        RETVAL=2
+esac
+
+exit $RETVAL
